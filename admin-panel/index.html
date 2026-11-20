@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devil Game Hub - Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside>
+    <div class="brand">
+      <div class="brand-icon">😈</div>
+      <div class="brand-text">
+        <h2><span>DEVIL</span> <span>ADMIN</span></h2>
+        <p>Game Platform Manager</p>
+      </div>
+    </div>
+
+    <ul class="nav-list">
+      <li class="nav-item active" id="nav-overview" onclick="switchView('overview')">📊 Overview</li>
+      <li class="nav-item" id="nav-games" onclick="switchView('games')">🎮 All Games</li>
+      <li class="nav-item" id="nav-addgame" onclick="handleAddGameNav()">➕ Add New Game</li>
+      <li class="nav-item" id="nav-categories" onclick="switchView('categories')">🏷️ Categories</li>
+      <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ Settings & GitHub</li>
+    </ul>
+  </aside>
+
+  <!-- Main Viewport -->
+  <main>
+    <header>
+      <div class="header-title">
+        <h1 id="viewHeaderTitle">Dashboard Overview</h1>
+        <p id="viewHeaderSubtitle">Manage games, draft catalogs, and JSON definitions for Devil Game Hub.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openAddGameModal()">+ Add New Game</button>
+        <button class="btn btn-secondary" onclick="exportJson()">📥 Export games.json</button>
+      </div>
+    </header>
+
+    <!-- VIEW 1: DASHBOARD OVERVIEW -->
+    <div class="view-section" id="view-overview">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(0, 240, 255, 0.15); color: var(--neon-cyan);">🎮</div>
+          <div class="stat-info">
+            <h3 id="statTotal">0</h3>
+            <p>Total Games</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(0, 255, 102, 0.15); color: var(--neon-green);">🚀</div>
+          <div class="stat-info">
+            <h3 id="statPublished">0</h3>
+            <p>Published Games</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(255, 184, 0, 0.15); color: var(--neon-amber);">📝</div>
+          <div class="stat-info">
+            <h3 id="statDrafts">0</h3>
+            <p>Draft Games</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: var(--neon-purple);">🏷️</div>
+          <div class="stat-info">
+            <h3 id="statCategories">0</h3>
+            <p>Total Categories</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2 style="margin-bottom: 12px; font-size: 18px;">Catalog Overview & Quick Actions</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; line-height: 20px; margin-bottom: 16px;">
+          Manage your game platform catalog using browser LocalStorage. Add new games, toggle Published/Draft statuses, edit descriptions, and publish directly to GitHub REST API or export the standardized <code>games.json</code> file.
+        </p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="openAddGameModal()">+ Add New Game</button>
+          <button class="btn btn-secondary" onclick="switchView('games')">View All Games →</button>
+          <button class="btn btn-secondary" onclick="exportJson()">📥 Export games.json</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Recently Added / Updated Games</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Game Title / ID</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recentGamesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 2: ALL GAMES -->
+    <div class="view-section" id="view-games" style="display: none;">
+      <div class="section-card">
+        <div class="filter-bar">
+          <input type="text" id="searchGames" placeholder="Search games by title, ID or category..." style="flex: 2;">
+          <select id="filterCategory" style="flex: 1;">
+            <option value="all">All Categories</option>
+          </select>
+          <select id="filterStatus" style="flex: 1;">
+            <option value="all">All Statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Game Title / ID</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Rating</th>
+              <th>Status</th>
+              <th>Flags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="gamesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 3: CATEGORIES -->
+    <div class="view-section" id="view-categories" style="display: none;">
+      <div class="section-card">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Active Categories</h2>
+        <div class="stats-grid" id="categoriesGrid"></div>
+      </div>
+
+      <div class="section-card">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Add New Category</h2>
+        <form onsubmit="addCategoryForm(event)" style="display: flex; gap: 12px; max-width: 500px;">
+          <input type="text" id="newCatName" placeholder="Category Name (e.g. Racing)" required style="flex: 2;">
+          <input type="text" id="newCatIcon" placeholder="Emoji Icon (e.g. 🏎️)" style="flex: 1;">
+          <button type="submit" class="btn btn-primary">Add Category</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 4: SETTINGS & GITHUB PUBLISHING -->
+    <div class="view-section" id="view-settings" style="display: none;">
+      <div class="section-card">
+        <h2 style="margin-bottom: 12px; font-size: 18px; color: var(--neon-cyan);">🚀 GitHub Dynamic Publishing (Central Source of Truth)</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; line-height: 20px; margin-bottom: 20px;">
+          Publish your game catalog directly to your remote GitHub repository via GitHub REST API. Published changes immediately sync to all Android app users upon launch!
+        </p>
+
+        <form onsubmit="publishToGitHub(event)" style="max-width: 650px;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>GitHub Owner / Username</label>
+              <input type="text" id="ghOwner" placeholder="devilgamehub" required>
+            </div>
+            <div class="form-group">
+              <label>Repository Name</label>
+              <input type="text" id="ghRepo" placeholder="games-db" required>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Target Branch</label>
+              <input type="text" id="ghBranch" value="main" required>
+            </div>
+            <div class="form-group">
+              <label>Catalog File Path</label>
+              <input type="text" id="ghPath" value="games.json" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label>GitHub Personal Access Token (PAT) <small style="color: var(--neon-amber);">(Private Session Only)</small></label>
+            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+            <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">
+              Requires <code>repo</code> contents write scope. Tokens are held securely in memory/session only and NEVER embedded into APK or git repository.
+            </small>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+            <button type="submit" class="btn btn-primary">🚀 Publish Catalog to GitHub</button>
+            <button type="button" class="btn btn-secondary" onclick="testGitHubConnection()">🔍 Test Repository Access</button>
+          </div>
+
+          <div id="publishConsole" style="display: none; background: var(--surface-card); border: 1px solid var(--surface-border); padding: 14px; border-radius: 12px; font-family: monospace; font-size: 12px; color: var(--neon-cyan);"></div>
+        </form>
+      </div>
+
+      <div class="section-card">
+        <h2 style="margin-bottom: 12px; font-size: 18px;">Local Storage & Offline Catalog Export</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; line-height: 20px; margin-bottom: 16px;">
+          Local storage state and offline JSON configuration tools.
+        </p>
+
+        <div style="background: var(--surface-card); border: 1px solid var(--surface-border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+          <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px;">Catalog Status Info</div>
+          <div style="font-size: 12px; color: var(--text-secondary);" id="storageInfo">
+            Last Updated: -- | Storage Size: -- KB
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="exportJson()">📥 Download games.json</button>
+          <button class="btn btn-secondary" onclick="resetDemoData()">🔄 Reset to Sample Data</button>
+          <button class="btn btn-danger" onclick="clearLocalStorageData()">🗑️ Clear Local Storage</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ADD / EDIT GAME MODAL -->
+  <div class="modal-overlay" id="gameModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-content">
+      <h2 id="modalTitle" style="margin-bottom: 20px; color: var(--neon-purple);">Add New Game</h2>
+
+      <form id="gameForm" onsubmit="saveGameForm(event)">
+        <input type="hidden" id="editGameId">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Game Unique ID</label>
+            <input type="text" id="gameId" required placeholder="game_my_title">
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="gameTitle" required placeholder="Cyber Nitro Racer">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Description</label>
+          <textarea id="gameDesc" rows="2" placeholder="Brief game overview and controls..."></textarea>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="gameCategory"></select>
+          </div>
+          <div class="form-group">
+            <label>Game Type</label>
+            <select id="gameType">
+              <option value="2D">2D</option>
+              <option value="3D">3D</option>
+              <option value="HTML5">HTML5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="gameStatus">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Asset Path (Local)</label>
+            <input type="text" id="gameAssetPath" placeholder="games/snake/index.html">
+          </div>
+          <div class="form-group">
+            <label>Game URL (Remote)</label>
+            <input type="text" id="gameUrl" placeholder="https://example.com">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Thumbnail Image URL</label>
+            <input type="text" id="gameThumb" placeholder="https://images.unsplash.com/...">
+          </div>
+          <div class="form-group">
+            <label>Orientation</label>
+            <select id="gameOrientation">
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+              <option value="any">Any</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 20px;">
+          <div class="form-group">
+            <label>Rating (1.0 - 5.0)</label>
+            <input type="number" step="0.1" id="gameRating" value="4.8">
+          </div>
+          <div class="form-group">
+            <label>Featured?</label>
+            <select id="gameFeatured">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Popular?</label>
+            <select id="gamePopular">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Viper Snake Cyber</title>
+  <style>
+    :root {
+      --bg-black: #08080e;
+      --surface-dark: #12121d;
+      --surface-card: #1b1b2a;
+      --border-color: #2e2e48;
+      --neon-green: #00ff66;
+      --neon-cyan: #00f0ff;
+      --neon-purple: #a855f7;
+      --neon-pink: #ff007f;
+      --neon-red: #ff2a6d;
+      --neon-amber: #ffb800;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-black);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 440px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      position: relative;
+    }
+
+    header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title-box h1 {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+    }
+
+    .title-box p {
+      font-size: 9px;
+      color: var(--neon-cyan);
+      letter-spacing: 1.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .scores-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .score-card {
+      background: var(--surface-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 4px 10px;
+      text-align: center;
+      min-width: 65px;
+    }
+
+    .score-lbl {
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--neon-green);
+      letter-spacing: 1px;
+    }
+
+    .score-val {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+
+    .action-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      color: #08080e;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+      position: relative;
+      z-index: 20;
+    }
+
+    .btn-purple {
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+      color: #fff;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .canvas-wrapper {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 380px;
+      background: var(--surface-dark);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      position: relative;
+      box-shadow: 0 0 25px rgba(0, 255, 102, 0.15);
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Floating Dynamic Control Layer */
+    .controls-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    /* D-Pad Container */
+    .dpad-box {
+      position: absolute;
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 4px;
+      pointer-events: auto;
+      touch-action: none;
+      transform-origin: center center;
+    }
+
+    .dbtn {
+      background: var(--surface-dark);
+      border: 1.5px solid var(--neon-green);
+      border-radius: 10px;
+      color: var(--neon-green);
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+    }
+
+    .dbtn:active {
+      background: var(--neon-green);
+      color: #08080e;
+    }
+
+    .dbtn-up { grid-column: 2; grid-row: 1; }
+    .dbtn-left { grid-column: 1; grid-row: 2; }
+    .dbtn-down { grid-column: 2; grid-row: 3; }
+    .dbtn-right { grid-column: 3; grid-row: 2; }
+
+    /* Bottom Bar Layout Modifier */
+    .dpad-box.layout-bottom {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+    }
+    .dpad-box.layout-bottom .dbtn {
+      width: 46px;
+      height: 46px;
+    }
+
+    /* Virtual Joystick */
+    .joystick-box {
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(18, 18, 29, 0.7);
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .joystick-knob {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      box-shadow: 0 0 12px var(--neon-cyan);
+      position: absolute;
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Edit Handles for Dragging */
+    .edit-mode .dpad-box,
+    .edit-mode .joystick-box {
+      border-color: var(--neon-pink) !important;
+      box-shadow: 0 0 20px var(--neon-pink) !important;
+      cursor: move;
+    }
+
+    .edit-badge {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--neon-pink);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      display: none;
+    }
+    .edit-mode .edit-badge { display: block; }
+
+    /* Overlay Screens */
+    .overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(8, 8, 14, 0.92);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 30;
+      padding: 16px;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overlay-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .gameover .overlay-title { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
+    .pause .overlay-title { color: var(--neon-cyan); text-shadow: 0 0 15px var(--neon-cyan); }
+    .editor .overlay-title { color: var(--neon-purple); text-shadow: 0 0 15px var(--neon-purple); }
+
+    /* Control Editor Form UI */
+    .editor-section {
+      width: 100%;
+      background: var(--surface-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .editor-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .editor-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+    }
+
+    .opt-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .opt-btn {
+      background: var(--surface-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 9px;
+      font-weight: 800;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .opt-btn.active {
+      background: var(--neon-purple);
+      color: #fff;
+      border-color: var(--neon-pink);
+    }
+
+    input[type=range] {
+      width: 100px;
+      accent-color: var(--neon-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container" id="gameContainer">
+    <header>
+      <div class="title-box">
+        <h1>VIPER SNAKE</h1>
+        <p>CYBER GRID ARCADE</p>
+      </div>
+      <div class="scores-row">
+        <div class="score-card">
+          <div class="score-lbl">SCORE</div>
+          <div class="score-val" id="score">0</div>
+        </div>
+        <div class="score-card">
+          <div class="score-lbl">BEST</div>
+          <div class="score-val" id="bestScore">0</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="action-bar">
+      <button class="btn" onclick="togglePause()" id="pauseBtn">PAUSE</button>
+      <button class="btn btn-purple" onclick="openControlEditor()">⚙️ CONTROLS</button>
+      <button class="btn" onclick="restartGame()">RESTART</button>
+    </div>
+
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+      <!-- Overlay Game Over -->
+      <div class="overlay gameover" id="gameOverOverlay">
+        <div class="overlay-title">SYSTEM CRASHED</div>
+        <div style="color: var(--text-secondary); font-size: 12px;" id="finalScoreTxt">SCORE: 0</div>
+        <button class="btn" onclick="restartGame()">REBOOT VIPER</button>
+      </div>
+
+      <!-- Overlay Pause -->
+      <div class="overlay pause" id="pauseOverlay">
+        <div class="overlay-title">SYSTEM PAUSED</div>
+        <button class="btn" onclick="togglePause()">RESUME VIPER</button>
+      </div>
+
+      <!-- Control Customization Editor Overlay -->
+      <div class="overlay editor" id="editorOverlay">
+        <div class="overlay-title">CONTROL EDITOR</div>
+
+        <div class="editor-section">
+          <div class="editor-row">
+            <span class="editor-label">Control Mode:</span>
+            <div class="opt-group">
+              <button class="opt-btn" id="modeDpad" onclick="setControlMode('dpad')">D-Pad</button>
+              <button class="opt-btn" id="modeSwipe" onclick="setControlMode('swipe')">Swipe</button>
+              <button class="opt-btn" id="modeHybrid" onclick="setControlMode('hybrid')">Hybrid</button>
+              <button class="opt-btn" id="modeJoystick" onclick="setControlMode('joystick')">Joystick</button>
+            </div>
+          </div>
+
+          <div class="editor-row">
+            <span class="editor-label">Preset Layout:</span>
+            <div class="opt-group">
+              <button class="opt-btn" onclick="applyPreset('classic')">Classic</button>
+              <button class="opt-btn" onclick="applyPreset('left')">Left-Hand</button>
+              <button class="opt-btn" onclick="applyPreset('right')">Right-Hand</button>
+              <button class="opt-btn" onclick="applyPreset('bottom')">Bottom Bar</button>
+            </div>
+          </div>
+
+          <div class="editor-row">
+            <span class="editor-label">Size Scale:</span>
+            <input type="range" id="sizeRange" min="0.7" max="1.5" step="0.05" oninput="updateControlStyle()">
+          </div>
+
+          <div class="editor-row">
+            <span class="editor-label">Opacity:</span>
+            <input type="range" id="opacityRange" min="0.2" max="1.0" step="0.05" oninput="updateControlStyle()">
+          </div>
+        </div>
+
+        <div style="color: var(--text-secondary); font-size: 10px; text-align: center;">
+          DRAG CONTROLS ON SCREEN TO REPOSITION
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-purple" onclick="resetControlsDefault()">RESET DEFAULT</button>
+          <button class="btn" onclick="saveAndCloseEditor()">SAVE & PLAY</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Dynamic Control Layer -->
+    <div class="controls-layer" id="controlsLayer">
+      <!-- D-Pad Box -->
+      <div class="dpad-box" id="dpadBox">
+        <div class="edit-badge">DRAG DPAD</div>
+        <div class="dbtn dbtn-up" id="btnUp" onclick="handleButtonInput(0, -1)">▲</div>
+        <div class="dbtn dbtn-left" id="btnLeft" onclick="handleButtonInput(-1, 0)">◄</div>
+        <div class="dbtn dbtn-down" id="btnDown" onclick="handleButtonInput(0, 1)">▼</div>
+        <div class="dbtn dbtn-right" id="btnRight" onclick="handleButtonInput(1, 0)">►</div>
+      </div>
+
+      <!-- Virtual Joystick Box -->
+      <div class="joystick-box" id="joystickBox" style="display: none;">
+        <div class="edit-badge">DRAG JOYSTICK</div>
+        <div class="joystick-knob" id="joystickKnob"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const GRID_SIZE = 20;
+    const CELL_COUNT = 20;
+
+    let snake = [];
+    let dir = { x: 1, y: 0 };
+    let nextDir = { x: 1, y: 0 };
+    let food = { x: 5, y: 5, isBonus: false };
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem('viper_snake_cyber_best') || '0', 10);
+    let gameLoopTimer = null;
+    let isPaused = false;
+    let isGameOver = false;
+    let isEditMode = false;
+    let speed = 120;
+
+    const scoreEl = document.getElementById('score');
+    const bestScoreEl = document.getElementById('bestScore');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const editorOverlay = document.getElementById('editorOverlay');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const finalScoreTxt = document.getElementById('finalScoreTxt');
+
+    const dpadBox = document.getElementById('dpadBox');
+    const joystickBox = document.getElementById('joystickBox');
+    const joystickKnob = document.getElementById('joystickKnob');
+
+    bestScoreEl.innerText = bestScore;
+
+    // Default Control Configuration
+    const DEFAULT_CONFIG = {
+      mode: 'hybrid', // dpad, swipe, hybrid, joystick
+      preset: 'classic',
+      scale: 1.0,
+      opacity: 0.85,
+      dpadPos: { left: 50, bottom: 20 }, // in percentage / px
+      joystickPos: { left: 50, bottom: 30 }
+    };
+
+    let controlConfig = loadControlConfig();
+
+    function loadControlConfig() {
+      try {
+        const saved = localStorage.getItem('snake_controls_config');
+        return saved ? { ...DEFAULT_CONFIG, ...JSON.parse(saved) } : { ...DEFAULT_CONFIG };
+      } catch (_) {
+        return { ...DEFAULT_CONFIG };
+      }
+    }
+
+    function saveControlConfig() {
+      localStorage.setItem('snake_controls_config', JSON.stringify(controlConfig));
+    }
+
+    // Audio SFX
+    let audioCtx = null;
+    function playBeep(freq, type = 'sine', duration = 0.08) {
+      if (window.isMuted === true) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (_) {}
+    }
+
+    function initGame() {
+      snake = [
+        { x: 10, y: 10 },
+        { x: 9, y: 10 },
+        { x: 8, y: 10 }
+      ];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      score = 0;
+      speed = 120;
+      isPaused = false;
+      isGameOver = false;
+
+      scoreEl.innerText = '0';
+      pauseBtn.innerText = 'PAUSE';
+      gameOverOverlay.classList.remove('active');
+      pauseOverlay.classList.remove('active');
+      editorOverlay.classList.remove('active');
+
+      spawnFood();
+      startLoop();
+      applyControlConfig();
+    }
+
+    function spawnFood() {
+      let valid = false;
+      while (!valid) {
+        food.x = Math.floor(Math.random() * CELL_COUNT);
+        food.y = Math.floor(Math.random() * CELL_COUNT);
+        valid = !snake.some(segment => segment.x === food.x && segment.y === food.y);
+      }
+      food.isBonus = Math.random() < 0.25;
+    }
+
+    function setDir(dx, dy) {
+      if (isPaused || isGameOver || isEditMode) return;
+      if (dx !== 0 && dir.x === -dx) return;
+      if (dy !== 0 && dir.y === -dy) return;
+      nextDir = { x: dx, y: dy };
+    }
+
+    function handleButtonInput(dx, dy) {
+      if (isEditMode) return;
+      setDir(dx, dy);
+    }
+
+    function update() {
+      dir = { ...nextDir };
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+      if (head.x < 0 || head.x >= CELL_COUNT || head.y < 0 || head.y >= CELL_COUNT ||
+          snake.some(s => s.x === head.x && s.y === head.y)) {
+        triggerGameOver();
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        const points = food.isBonus ? 30 : 10;
+        score += points;
+        scoreEl.innerText = score;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestScoreEl.innerText = bestScore;
+          localStorage.setItem('viper_snake_cyber_best', bestScore);
+        }
+
+        playBeep(food.isBonus ? 880 : 587, 'triangle', 0.12);
+        if (speed > 60) speed -= 1;
+        spawnFood();
+        startLoop();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#12121d';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#1b1b2a';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= CELL_COUNT; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * GRID_SIZE, 0);
+        ctx.lineTo(i * GRID_SIZE, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, i * GRID_SIZE);
+        ctx.lineTo(canvas.width, i * GRID_SIZE);
+        ctx.stroke();
+      }
+
+      // Food
+      ctx.shadowBlur = food.isBonus ? 15 : 10;
+      ctx.shadowColor = food.isBonus ? '#ff007f' : '#00ff66';
+      ctx.fillStyle = food.isBonus ? '#ff007f' : '#00ff66';
+      ctx.beginPath();
+      ctx.arc(
+        food.x * GRID_SIZE + GRID_SIZE / 2,
+        food.y * GRID_SIZE + GRID_SIZE / 2,
+        GRID_SIZE / 2 - 2, 0, Math.PI * 2
+      );
+      ctx.fill();
+
+      // Snake
+      snake.forEach((s, idx) => {
+        const isHead = idx === 0;
+        ctx.shadowBlur = isHead ? 12 : 6;
+        ctx.shadowColor = isHead ? '#00f0ff' : '#00ff66';
+        ctx.fillStyle = isHead ? '#00f0ff' : '#00ff66';
+
+        ctx.fillRect(
+          s.x * GRID_SIZE + 1,
+          s.y * GRID_SIZE + 1,
+          GRID_SIZE - 2,
+          GRID_SIZE - 2
+        );
+      });
+
+      ctx.shadowBlur = 0;
+    }
+
+    function tick() {
+      if (!isPaused && !isGameOver && !isEditMode) {
+        update();
+        draw();
+      }
+    }
+
+    function startLoop() {
+      if (gameLoopTimer) clearInterval(gameLoopTimer);
+      gameLoopTimer = setInterval(tick, speed);
+    }
+
+    function triggerGameOver() {
+      isGameOver = true;
+      clearInterval(gameLoopTimer);
+      playBeep(150, 'sawtooth', 0.3);
+      finalScoreTxt.innerText = `FINAL SCORE: ${score}`;
+      gameOverOverlay.classList.add('active');
+    }
+
+    function togglePause() {
+      if (isGameOver || isEditMode) return;
+      isPaused = !isPaused;
+      pauseBtn.innerText = isPaused ? 'RESUME' : 'PAUSE';
+      if (isPaused) {
+        pauseOverlay.classList.add('active');
+      } else {
+        pauseOverlay.classList.remove('active');
+      }
+    }
+
+    function restartGame() {
+      initGame();
+    }
+
+    // --- CONTROL CUSTOMIZATION ENGINE ---
+    function applyControlConfig() {
+      const mode = controlConfig.mode;
+      const opacity = controlConfig.opacity || 0.85;
+      const scale = controlConfig.scale || 1.0;
+
+      // Mode visibility
+      if (mode === 'dpad' || mode === 'hybrid') {
+        dpadBox.style.display = 'grid';
+        joystickBox.style.display = 'none';
+      } else if (mode === 'joystick') {
+        dpadBox.style.display = 'none';
+        joystickBox.style.display = 'flex';
+      } else { // swipe
+        dpadBox.style.display = 'none';
+        joystickBox.style.display = 'none';
+      }
+
+      if (controlConfig.preset === 'bottom') {
+        dpadBox.classList.add('layout-bottom');
+      } else {
+        dpadBox.classList.remove('layout-bottom');
+      }
+
+      // Styles
+      dpadBox.style.opacity = opacity;
+      dpadBox.style.transform = `scale(${scale})`;
+      joystickBox.style.opacity = opacity;
+      joystickBox.style.transform = `scale(${scale})`;
+
+      // Positions
+      if (controlConfig.dpadPos) {
+        dpadBox.style.left = controlConfig.dpadPos.left + '%';
+        dpadBox.style.top = controlConfig.dpadPos.top + '%';
+      }
+      if (controlConfig.joystickPos) {
+        joystickBox.style.left = controlConfig.joystickPos.left + '%';
+        joystickBox.style.top = controlConfig.joystickPos.top + '%';
+      }
+
+      updateEditorButtonsState();
+    }
+
+    function openControlEditor() {
+      isEditMode = true;
+      if (!isPaused) isPaused = true;
+      editorOverlay.classList.add('active');
+      document.body.classList.add('edit-mode');
+
+      document.getElementById('sizeRange').value = controlConfig.scale || 1.0;
+      document.getElementById('opacityRange').value = controlConfig.opacity || 0.85;
+      applyControlConfig();
+    }
+
+    function saveAndCloseEditor() {
+      isEditMode = false;
+      isPaused = false;
+      pauseBtn.innerText = 'PAUSE';
+      editorOverlay.classList.remove('active');
+      pauseOverlay.classList.remove('active');
+      document.body.classList.remove('edit-mode');
+      saveControlConfig();
+    }
+
+    function setControlMode(mode) {
+      controlConfig.mode = mode;
+      applyControlConfig();
+    }
+
+    function applyPreset(preset) {
+      controlConfig.preset = preset;
+      switch (preset) {
+        case 'classic':
+          controlConfig.mode = 'hybrid';
+          controlConfig.scale = 1.0;
+          controlConfig.opacity = 0.85;
+          controlConfig.dpadPos = { left: 35, top: 78 };
+          controlConfig.joystickPos = { left: 35, top: 78 };
+          break;
+        case 'left':
+          controlConfig.mode = 'hybrid';
+          controlConfig.scale = 1.0;
+          controlConfig.dpadPos = { left: 10, top: 78 };
+          controlConfig.joystickPos = { left: 10, top: 78 };
+          break;
+        case 'right':
+          controlConfig.mode = 'hybrid';
+          controlConfig.scale = 1.0;
+          controlConfig.dpadPos = { left: 65, top: 78 };
+          controlConfig.joystickPos = { left: 65, top: 78 };
+          break;
+        case 'bottom':
+          controlConfig.mode = 'dpad';
+          controlConfig.scale = 1.0;
+          controlConfig.dpadPos = { left: 20, top: 88 };
+          break;
+        case 'swipe':
+          controlConfig.mode = 'swipe';
+          break;
+      }
+      applyControlConfig();
+    }
+
+    function updateControlStyle() {
+      controlConfig.scale = parseFloat(document.getElementById('sizeRange').value);
+      controlConfig.opacity = parseFloat(document.getElementById('opacityRange').value);
+      applyControlConfig();
+    }
+
+    function resetControlsDefault() {
+      controlConfig = { ...DEFAULT_CONFIG };
+      applyPreset('classic');
+    }
+
+    function updateEditorButtonsState() {
+      document.querySelectorAll('.opt-group .opt-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('mode' + controlConfig.mode.charAt(0).toUpperCase() + controlConfig.mode.slice(1));
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // --- DRAG AND DROP CONTROLS IN EDIT MODE ---
+    function makeDraggable(el, key) {
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let initLeft = 0, initTop = 0;
+
+      el.addEventListener('touchstart', e => {
+        if (!isEditMode) return;
+        isDragging = true;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const rect = el.getBoundingClientRect();
+        const parentRect = document.getElementById('gameContainer').getBoundingClientRect();
+        initLeft = rect.left - parentRect.left;
+        initTop = rect.top - parentRect.top;
+      }, { passive: false });
+
+      window.addEventListener('touchmove', e => {
+        if (!isDragging || !isEditMode) return;
+        if (e.cancelable) e.preventDefault();
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        const parentRect = document.getElementById('gameContainer').getBoundingClientRect();
+        let newLeftPx = initLeft + dx;
+        let newTopPx = initTop + dy;
+
+        // Convert to percentage relative to parent
+        let leftPct = Math.max(0, Math.min(80, (newLeftPx / parentRect.width) * 100));
+        let topPct = Math.max(10, Math.min(88, (newTopPx / parentRect.height) * 100));
+
+        el.style.left = leftPct + '%';
+        el.style.top = topPct + '%';
+
+        if (key === 'dpad') controlConfig.dpadPos = { left: leftPct, top: topPct };
+        if (key === 'joystick') controlConfig.joystickPos = { left: leftPct, top: topPct };
+      }, { passive: false });
+
+      window.addEventListener('touchend', () => { isDragging = false; });
+    }
+
+    makeDraggable(dpadBox, 'dpad');
+    makeDraggable(joystickBox, 'joystick');
+
+    // --- VIRTUAL JOYSTICK ENGINE ---
+    let joyTouchId = null;
+    let joyCenter = { x: 0, y: 0 };
+
+    joystickBox.addEventListener('touchstart', e => {
+      if (isEditMode) return;
+      const touch = e.touches[0];
+      joyTouchId = touch.identifier;
+      const rect = joystickBox.getBoundingClientRect();
+      joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      handleJoystickMove(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+      if (joyTouchId === null || isEditMode) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyTouchId) {
+          handleJoystickMove(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+          break;
+        }
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchend', e => {
+      if (joyTouchId === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyTouchId) {
+          joyTouchId = null;
+          joystickKnob.style.transform = 'translate(0px, 0px)';
+          break;
+        }
+      }
+    });
+
+    function handleJoystickMove(clientX, clientY) {
+      const dx = clientX - joyCenter.x;
+      const dy = clientY - joyCenter.y;
+      const dist = Math.hypot(dx, dy);
+      const maxRadius = 35;
+
+      const angle = Math.atan2(dy, dx);
+      const clampedDist = Math.min(dist, maxRadius);
+      const knobX = Math.cos(angle) * clampedDist;
+      const knobY = Math.sin(angle) * clampedDist;
+
+      joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+      // Direction threshold check (dead zone = 12px)
+      if (dist > 12) {
+        const deg = angle * (180 / Math.PI);
+        if (deg >= -45 && deg <= 45) setDir(1, 0); // Right
+        else if (deg > 45 && deg < 135) setDir(0, 1); // Down
+        else if (deg >= 135 || deg <= -135) setDir(-1, 0); // Left
+        else if (deg > -135 && deg < -45) setDir(0, -1); // Up
+      }
+    }
+
+    // --- KEYBOARD CONTROLS ---
+    window.addEventListener('keydown', e => {
+      switch (e.key) {
+        case 'ArrowUp': case 'w': case 'W': setDir(0, -1); break;
+        case 'ArrowDown': case 's': case 'S': setDir(0, 1); break;
+        case 'ArrowLeft': case 'a': case 'A': setDir(-1, 0); break;
+        case 'ArrowRight': case 'd': case 'D': setDir(1, 0); break;
+        case 'p': case 'P': case ' ': togglePause(); break;
+      }
+    });
+
+    // --- FULL VIEWPORT SWIPE CONTROLS ---
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    window.addEventListener('touchstart', e => {
+      if (isEditMode || e.touches.length === 0) return;
+      if (e.target.closest('button, .btn, .dbtn, .joystick-box')) return;
+
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+      if (isEditMode) return;
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener('touchend', e => {
+      if (isEditMode || !touchStartX || !touchStartY) return;
+      if (e.changedTouches.length === 0) return;
+
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if ((controlConfig.mode === 'swipe' || controlConfig.mode === 'hybrid') && (absDx >= 25 || absDy >= 25)) {
+        if (absDx > absDy) {
+          if (dx > 0) setDir(1, 0); else setDir(-1, 0);
+        } else {
+          if (dy > 0) setDir(0, 1); else setDir(0, -1);
+        }
+      }
+
+      touchStartX = 0;
+      touchStartY = 0;
+    }, { passive: false });
+
+    // Launch Game
+    initGame();
+  </script>
+</body>
+</html>
